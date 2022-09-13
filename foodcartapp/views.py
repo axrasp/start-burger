@@ -63,21 +63,29 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     try:
-        order = json.loads(request.body.decode())
-        print(order)
+        order = request.data
+        if not order['products']:
+            return Response({
+                'error': 'products - это обязательное поле'
+                         ' и не может быть пустым.'
+            })
+        if not type(order['products']) == list:
+            return Response({
+                'error': f'products - ожидался list со значениями, '
+                         f'но был получен {type(order["products"])}'
+            })
+
         new_order = Order.objects.create(
             firstname=order['firstname'],
             lastname=order['lastname'],
             phone=order['phonenumber'],
             address=order['address']
         )
-        print(new_order)
+
         for item in order['products']:
-            print(item)
             product = Product.objects.get(
                 pk=item['product']
             )
-            print(product)
             new_order_product = OrderProduct.objects.create(
                 order=new_order,
                 product=product,
@@ -87,9 +95,9 @@ def register_order(request):
             new_order_product.save()
             new_order.products.add(product)
             new_order.save()
-    except ValueError:
+
+    except KeyError as e:
         return Response({
-            'error': 'bla bla bla',
+            'error': f'{e} Обязательное поле'
         })
-    print(order)
     return Response(order)
