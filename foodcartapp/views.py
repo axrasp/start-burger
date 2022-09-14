@@ -1,14 +1,9 @@
-import json
-
-from django.db import IntegrityError
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.templatetags.static import static
-
-import phonenumbers
-from phonenumbers import NumberParseException
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.serializers import (IntegerField, ModelSerializer,
+                                        Serializer, ValidationError)
 
 from .models import Order, OrderProduct, Product
 
@@ -65,64 +60,51 @@ def product_list_api(request):
     })
 
 
-def check_missing_data(order):
-    incorrect_fields = [field for field in order.keys() if not order[field]]
-    if incorrect_fields:
-        raise KeyError(incorrect_fields)
-    if not isinstance(order['products'], list):
-        raise TypeError(f'"products" должен быть list, а получен {[type(order["products"])]}')
-    phone_parsed = phonenumbers.parse(order['phonenumber'], "IN")
-    if not phonenumbers.is_valid_number(phone_parsed):
-        raise NumberParseException(order["phonenumber"], f'введен некорректный номер')
-    return order
+class ProductsSerializer(Serializer):
+    product = IntegerField(min_value=1)
+    quantity = IntegerField(min_value=1)
+
+    def validate_product(self, value):
+        if not Product.objects.filter(pk=value).exists():
+            raise ValidationError(f'Недопустимый первичный '
+                                  f'ключ product : {value}')
+        return value
+
+
+class OrderSerializer(ModelSerializer):
+    products = ProductsSerializer(many=True, allow_empty=False)
+
+    class Meta:
+        model = Order
+        fields = [
+            'phonenumber',
+            'firstname',
+            'lastname',
+            'address',
+            'products'
+        ]
 
 
 @api_view(['POST'])
 def register_order(request):
-    try:
-        order = check_missing_data(request.data)
-        new_order = Order.objects.create(
-            firstname=order['firstname'],
-            lastname=order['lastname'],
-            phone=order['phonenumber'],
-            address=order['address']
-        )
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    order_serialized = serializer.validated_data
 
-        for item in order['products']:
-            product = Product.objects.get(
-                pk=item['product']
-            )
-            new_order_product = OrderProduct.objects.create(
-                order=new_order,
-                product=product,
-                price=product.price,
-                quantity=item['quantity']
-            )
-            new_order_product.save()
-            new_order.products.add(product)
-            new_order.save()
-    except KeyError as e:
-        return Response({
-            'error': f'{e} - обязательно для заполненения или имеют другой тип'
-        })
-    except IntegrityError as e:
-        return Response({
-            'error': f'{e} - не может отсутствовать или быть пустым'
-        })
-    except TypeError as e:
-        return Response({
-            'error': str(e)
-        })
-    except ValueError as e:
-        return Response({
-            'error': str(e)
-        })
-    except NumberParseException as e:
-        return Response({
-            'error': str(e)
-        })
-    except ObjectDoesNotExist as e:
-        return Response({
-            'error': str(e)
-        })
-    return Response(order)
+    new_order = Order.objects.create(
+        firstname=order_serialized['firstname'],
+        lastname=order_serialized['lastname'],
+        phonenumber=order_serialized['phonenumber'],
+        address=order_serialized['address']
+    )
+
+    products_serialized = order_serialized['products']
+    new_order_products = [
+        OrderProduct(order=new_order,
+                     product=Product.objects.get(pk=product['product']),
+                     quantity=product['quantity'])
+        for product in products_serialized
+    ]
+    OrderProduct.objects.bulk_create(new_order_products)
+
+    return Response(order_serialized)
