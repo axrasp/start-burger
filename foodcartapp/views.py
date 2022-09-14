@@ -1,7 +1,12 @@
 import json
 
+from django.db import IntegrityError
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.templatetags.static import static
+
+import phonenumbers
+from phonenumbers import NumberParseException
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -60,21 +65,22 @@ def product_list_api(request):
     })
 
 
+def check_missing_data(order):
+    incorrect_fields = [field for field in order.keys() if not order[field]]
+    if incorrect_fields:
+        raise KeyError(incorrect_fields)
+    if not isinstance(order['products'], list):
+        raise TypeError(f'"products" должен быть list, а получен {[type(order["products"])]}')
+    phone_parsed = phonenumbers.parse(order['phonenumber'], "IN")
+    if not phonenumbers.is_valid_number(phone_parsed):
+        raise NumberParseException(order["phonenumber"], f'введен некорректный номер')
+    return order
+
+
 @api_view(['POST'])
 def register_order(request):
     try:
-        order = request.data
-        if not order['products']:
-            return Response({
-                'error': 'products - это обязательное поле'
-                         ' и не может быть пустым.'
-            })
-        if not type(order['products']) == list:
-            return Response({
-                'error': f'products - ожидался list со значениями, '
-                         f'но был получен {type(order["products"])}'
-            })
-
+        order = check_missing_data(request.data)
         new_order = Order.objects.create(
             firstname=order['firstname'],
             lastname=order['lastname'],
@@ -95,9 +101,28 @@ def register_order(request):
             new_order_product.save()
             new_order.products.add(product)
             new_order.save()
-
     except KeyError as e:
         return Response({
-            'error': f'{e} Обязательное поле'
+            'error': f'{e} - обязательно для заполненения или имеют другой тип'
+        })
+    except IntegrityError as e:
+        return Response({
+            'error': f'{e} - не может отсутствовать или быть пустым'
+        })
+    except TypeError as e:
+        return Response({
+            'error': str(e)
+        })
+    except ValueError as e:
+        return Response({
+            'error': str(e)
+        })
+    except NumberParseException as e:
+        return Response({
+            'error': str(e)
+        })
+    except ObjectDoesNotExist as e:
+        return Response({
+            'error': str(e)
         })
     return Response(order)
