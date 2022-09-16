@@ -99,7 +99,7 @@ class RestaurantMenuItem(models.Model):
     restaurant = models.ForeignKey(
         Restaurant,
         related_name='menu_items',
-        verbose_name="ресторан",
+        verbose_name='ресторан',
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
@@ -122,7 +122,7 @@ class RestaurantMenuItem(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.restaurant.name} - {self.product.name}"
+        return f'{self.restaurant.name} - {self.product.name}'
 
 
 class PriceQuerySet(models.QuerySet):
@@ -170,7 +170,12 @@ class Order(models.Model):
         ],
         db_index=True,
         default=0,
-        verbose_name="Cтатус"
+        verbose_name='Cтатус'
+    )
+    comment = models.TextField(
+        max_length=200,
+        verbose_name='Комментарий',
+        blank=True
     )
     objects = PriceQuerySet.as_manager()
 
@@ -179,7 +184,7 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
     def __str__(self):
-        return f"{self.firstname} - {self.pk}"
+        return f'{self.firstname} - {self.pk}'
 
 
 class OrderProduct(models.Model):
@@ -211,8 +216,8 @@ class OrderProduct(models.Model):
     )
 
     class Meta:
-        verbose_name = "Состав заказа"
-        verbose_name_plural = "Состав заказа"
+        verbose_name = 'Состав заказа'
+        verbose_name_plural = 'Состав заказа'
 
     def __str__(self):
-        return f"{self.product} {self.quantity} шт."
+        return f'{self.product} {self.quantity} шт.'
