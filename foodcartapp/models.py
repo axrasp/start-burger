@@ -161,6 +161,17 @@ class Order(models.Model):
         max_length=100,
         db_index=True
     )
+    status = models.SmallIntegerField(
+        choices=[
+            (0, 'Новый заказ'),
+            (1, 'Готовится'),
+            (2, 'Передан курьеру'),
+            (3, 'Закрыт')
+        ],
+        db_index=True,
+        default=0,
+        verbose_name="Cтатус"
+    )
     objects = PriceQuerySet.as_manager()
 
     class Meta:
