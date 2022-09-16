@@ -92,6 +92,7 @@ class OrderSerializer(ModelSerializer):
 
 @api_view(['POST'])
 def register_order(request):
+    print(request.data)
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     order_serialized = serializer.validated_data
@@ -107,7 +108,8 @@ def register_order(request):
     new_order_products = [
         OrderProduct(order=new_order,
                      product=Product.objects.get(pk=product['product']),
-                     quantity=product['quantity'])
+                     quantity=product['quantity'],
+                     price=Product.objects.get(pk=product['product']).price)
         for product in products_serialized
     ]
     OrderProduct.objects.bulk_create(new_order_products)
