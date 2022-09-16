@@ -1,7 +1,8 @@
 from django.contrib import admin
-from django.shortcuts import reverse
+from django.shortcuts import redirect, reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import (Order, OrderProduct, Product, Restaurant,
                      RestaurantMenuItem)
@@ -93,6 +94,7 @@ class ProductAdmin(admin.ModelAdmin):
             '<img src="{url}" style="max-height: 200px;"/>',
             url=obj.image.url
         )
+
     get_image_preview.short_description = 'превью'
 
     def get_image_list_preview(self, obj):
@@ -104,6 +106,7 @@ class ProductAdmin(admin.ModelAdmin):
             'style="max-height: 50px;"/></a>',
             edit_url=edit_url,
             src=obj.image.url)
+
     get_image_list_preview.short_description = 'превью'
 
 
@@ -113,6 +116,16 @@ class OrderProductInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    def response_post_save_change(self, request, obj):
+        res = super().response_post_save_change(request, obj)
+        print(res)
+        if 'next' not in request.GET:
+            return res
+        if url_has_allowed_host_and_scheme(request.GET['next'], None):
+            return redirect(request.GET['next'])
+        else:
+            return res
+
     search_fields = [
         'firstname',
         'lastname',
