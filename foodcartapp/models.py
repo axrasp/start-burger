@@ -173,6 +173,15 @@ class Order(models.Model):
         default=0,
         verbose_name='Cтатус'
     )
+    payment_method = models.SmallIntegerField(
+        choices=[
+            (0, 'Наличными'),
+            (1, 'Электронно'),
+        ],
+        db_index=True,
+        default=0,
+        verbose_name='Способ оплаты'
+    )
     comment = models.TextField(
         max_length=200,
         verbose_name='Комментарий',
