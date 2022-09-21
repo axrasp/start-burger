@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
+from rest_framework.serializers import Serializer
 
 
 
@@ -95,5 +96,5 @@ def view_restaurants(request):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     return render(request, template_name='order_items.html', context={
-        'orders': Order.objects.all().price
+        'orders': Order.objects.all().price.get_restaurants()
     })

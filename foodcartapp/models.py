@@ -3,20 +3,21 @@ from django.db import models
 from django.db.models import F, Sum
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+from collections import Counter
 
 
 class Restaurant(models.Model):
     name = models.CharField(
-        'название',
+        'Название',
         max_length=50
     )
     address = models.CharField(
-        'адрес',
+        'Адрес',
         max_length=100,
         blank=True,
     )
     contact_phone = models.CharField(
-        'контактный телефон',
+        'Контактный телефон',
         max_length=50,
         blank=True,
     )
@@ -41,13 +42,13 @@ class ProductQuerySet(models.QuerySet):
 
 class ProductCategory(models.Model):
     name = models.CharField(
-        'название',
+        'Название',
         max_length=50
     )
 
     class Meta:
-        verbose_name = 'категория'
-        verbose_name_plural = 'категории'
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
 
     def __str__(self):
         return self.name
@@ -55,33 +56,33 @@ class ProductCategory(models.Model):
 
 class Product(models.Model):
     name = models.CharField(
-        'название',
+        'Название',
         max_length=50
     )
     category = models.ForeignKey(
         ProductCategory,
-        verbose_name='категория',
+        verbose_name='Категория',
         related_name='products',
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
     )
     price = models.DecimalField(
-        'цена',
+        'Цена',
         max_digits=8,
         decimal_places=2,
         validators=[MinValueValidator(0)]
     )
     image = models.ImageField(
-        'картинка'
+        'Картинка'
     )
     special_status = models.BooleanField(
-        'спец.предложение',
+        'Спец.предложение',
         default=False,
         db_index=True,
     )
     description = models.TextField(
-        'описание',
+        'Описание',
         max_length=200,
         blank=True,
     )
@@ -89,8 +90,8 @@ class Product(models.Model):
     objects = ProductQuerySet.as_manager()
 
     class Meta:
-        verbose_name = 'товар'
-        verbose_name_plural = 'товары'
+        verbose_name = 'Товар'
+        verbose_name_plural = 'Товары'
 
     def __str__(self):
         return self.name
@@ -100,17 +101,17 @@ class RestaurantMenuItem(models.Model):
     restaurant = models.ForeignKey(
         Restaurant,
         related_name='menu_items',
-        verbose_name='ресторан',
+        verbose_name='Ресторан',
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
         related_name='menu_items',
-        verbose_name='продукт',
+        verbose_name='Продукт',
     )
     availability = models.BooleanField(
-        'в продаже',
+        'В продаже',
         default=True,
         db_index=True
     )
@@ -127,6 +128,27 @@ class RestaurantMenuItem(models.Model):
 
 
 class PriceQuerySet(models.QuerySet):
+    def get_restaurants(self):
+        orders = self.filter(status=0).prefetch_related('products')
+
+        menu_items_available = RestaurantMenuItem.objects.filter(
+            availability=True
+        ).select_related('restaurant', 'product')
+
+        for order in orders:
+            order.restaurants = set()
+
+            for order_item in order.products.all():
+                product_restaurants = [
+                    rest_item.restaurant for rest_item in menu_items_available
+                    if order_item.id == rest_item.product.id
+                ]
+
+                if not order.restaurants:
+                    order.restaurants = set(product_restaurants)
+                order.restaurants &= set(product_restaurants)
+        return orders
+
     @property
     def price(self):
         return self.annotate(
@@ -136,6 +158,7 @@ class PriceQuerySet(models.QuerySet):
 
 class Order(models.Model):
     phonenumber = PhoneNumberField(
+        verbose_name='Номер телефона'
     )
     firstname = models.CharField(
         max_length=20,
@@ -159,6 +182,7 @@ class Order(models.Model):
         verbose_name='Дата создания'
     )
     address = models.CharField(
+        verbose_name='Адрес',
         max_length=100,
         db_index=True
     )
@@ -203,6 +227,14 @@ class Order(models.Model):
         db_index=True,
         null=True,
         blank=True
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        related_name="orders",
+        on_delete=models.SET_NULL,
+        verbose_name="Ресторан",
+        null=True,
+        blank=True,
     )
     objects = PriceQuerySet.as_manager()
 

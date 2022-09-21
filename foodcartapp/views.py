@@ -94,7 +94,6 @@ class OrderSerializer(ModelSerializer):
 @api_view(['POST'])
 @transaction.atomic
 def register_order(request):
-    print(request.data)
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     order_serialized = serializer.validated_data
