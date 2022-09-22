@@ -1,17 +1,15 @@
+import requests
 from django import forms
-from django.shortcuts import redirect, render
-from django.views import View
-from django.urls import reverse_lazy
-from django.contrib.auth.decorators import user_passes_test
-from rest_framework.serializers import Serializer
-
-
-
+from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import user_passes_test
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.views import View
+from geopy import distance
 
-
-from foodcartapp.models import Product, Restaurant, Order
+from foodcartapp.models import Order, Product, Restaurant
 
 
 class Login(forms.Form):
@@ -66,6 +64,24 @@ def is_manager(user):
     return user.is_staff  # FIXME replace with specific permission
 
 
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_products(request):
     restaurants = list(Restaurant.objects.order_by('name'))
@@ -95,6 +111,37 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
+    yandex_api_key = settings.YANDEX_API_KEY
+    orders = Order.objects.all().price.get_restaurants()
+    for order in orders:
+        try:
+            order_coordinates = fetch_coordinates(yandex_api_key, order.address)
+        except request.RequestException:
+            print(f'Не удалось получить координаты адреса доставки: {order.address}')
+            order.restaurant_distances = None
+            continue
+
+        for rest in order.restaurants:
+            if not rest.lon or not rest.lat:
+                try:
+                    rest_coordinates = fetch_coordinates(yandex_api_key, rest.address)
+                except request.RequestException:
+                    print(f'Не удалось получить координаты адреса ресторана: {rest.address}')
+                    order.restaurant_distances = None
+                    continue
+                rest.lon = rest_coordinates[0]
+                rest.lat = rest_coordinates[1]
+                rest.save()
+
+            rest_distance = distance.distance(
+                (rest.lat, rest.lon),
+                (order_coordinates[1], order_coordinates[0])
+            ).km
+            order.restaurant_distances.append((rest.name, round(rest_distance, 2)))
+            order.restaurant_distances = sorted(
+                order.restaurant_distances, key=lambda rest_dist: rest_dist[1]
+            )
+
     return render(request, template_name='order_items.html', context={
-        'orders': Order.objects.all().price.get_restaurants()
+        'orders': orders
     })

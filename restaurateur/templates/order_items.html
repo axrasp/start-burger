@@ -37,8 +37,8 @@
         {% if order.restaurant == None  %}
         <td><details>
           <summary>Может быть приготовлен в</summary>
-            {% for restaurant in order.restaurants %}
-            <p>{{ restaurant.name }}</p>
+            {% for rest_dist in order.restaurant_distances %}
+            <p>{{ rest_dist.0 }} {{ rest_dist.1 }} км </p>
             {% endfor %}
         </details>
         </td>

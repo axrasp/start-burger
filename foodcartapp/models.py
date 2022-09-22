@@ -1,9 +1,8 @@
-from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import F, Sum
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
-from collections import Counter
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Restaurant(models.Model):
@@ -20,6 +19,24 @@ class Restaurant(models.Model):
         'Контактный телефон',
         max_length=50,
         blank=True,
+    )
+    lon = models.FloatField(
+        'Координата ресторана (Долгота)',
+        validators=[
+            MaxValueValidator(-180),
+            MinValueValidator(180)
+        ],
+        blank=True,
+        null=True
+    )
+    lat = models.FloatField(
+        'Координата ресторана (Широта)',
+        validators=[
+            MaxValueValidator(-90),
+            MinValueValidator(90)
+        ],
+        blank=True,
+        null=True
     )
 
     class Meta:
@@ -136,6 +153,7 @@ class PriceQuerySet(models.QuerySet):
         ).select_related('restaurant', 'product')
 
         for order in orders:
+            order.restaurant_distances = []
             order.restaurants = set()
 
             for order_item in order.products.all():
