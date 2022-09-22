@@ -10,6 +10,7 @@ from django.views import View
 from geopy import distance
 
 from foodcartapp.models import Order, Product, Restaurant
+from places.models import Place
 
 
 class Login(forms.Form):
@@ -89,17 +90,27 @@ def view_products(request):
 
     products_with_restaurant_availability = []
     for product in products:
-        availability = {item.restaurant_id: item.availability for item in product.menu_items.all()}
-        ordered_availability = [availability.get(restaurant.id, False) for restaurant in restaurants]
+        availability = {
+            item.restaurant_id: item.availability
+            for item in product.menu_items.all()
+        }
+        ordered_availability = [
+            availability.get(restaurant.id, False)
+            for restaurant in restaurants
+        ]
 
         products_with_restaurant_availability.append(
             (product, ordered_availability)
         )
 
-    return render(request, template_name="products_list.html", context={
-        'products_with_restaurant_availability': products_with_restaurant_availability,
-        'restaurants': restaurants,
-    })
+    return render(
+        request,
+        template_name="products_list.html",
+        context={
+            'products_with_restaurant_availability':
+                products_with_restaurant_availability,
+            'restaurants': restaurants,
+        })
 
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
@@ -109,24 +120,39 @@ def view_restaurants(request):
     })
 
 
+def get_place(api_key, address):
+    place, _ = Place.objects.get_or_create(
+        address=address
+    )
+    if not place.lon or not place.lat:
+        place_coordinates = fetch_coordinates(api_key, address)
+        place.lon = place_coordinates[0]
+        place.lat = place_coordinates[1]
+    return place
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     yandex_api_key = settings.YANDEX_API_KEY
     orders = Order.objects.all().price.get_restaurants()
     for order in orders:
         try:
-            order_coordinates = fetch_coordinates(yandex_api_key, order.address)
+            place = get_place(yandex_api_key, order.address)
         except request.RequestException:
-            print(f'Не удалось получить координаты адреса доставки: {order.address}')
+            print(f'Не удалось получить координаты '
+                  f'адреса доставки: {order.address}')
             order.restaurant_distances = None
             continue
 
         for rest in order.restaurants:
             if not rest.lon or not rest.lat:
                 try:
-                    rest_coordinates = fetch_coordinates(yandex_api_key, rest.address)
+                    rest_coordinates = fetch_coordinates(
+                        yandex_api_key, rest.address
+                    )
                 except request.RequestException:
-                    print(f'Не удалось получить координаты адреса ресторана: {rest.address}')
+                    print(f'Не удалось получить координаты '
+                          f'адреса ресторана: {rest.address}')
                     order.restaurant_distances = None
                     continue
                 rest.lon = rest_coordinates[0]
@@ -135,9 +161,11 @@ def view_orders(request):
 
             rest_distance = distance.distance(
                 (rest.lat, rest.lon),
-                (order_coordinates[1], order_coordinates[0])
+                (place.lat, place.lon)
             ).km
-            order.restaurant_distances.append((rest.name, round(rest_distance, 2)))
+            order.restaurant_distances.append(
+                (rest.name, round(rest_distance, 2))
+            )
             order.restaurant_distances = sorted(
                 order.restaurant_distances, key=lambda rest_dist: rest_dist[1]
             )
