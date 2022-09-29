@@ -170,7 +170,7 @@ class PriceQuerySet(models.QuerySet):
     @property
     def price(self):
         return self.annotate(
-            full_price=Sum(F('products__price')*F('order_products__quantity'))
+            full_price=Sum(F('products__price')*F('products_ordered__quantity'))
             )
 
 
@@ -224,7 +224,7 @@ class Order(models.Model):
         default=0,
         verbose_name='Способ оплаты'
     )
-    comment = models.TextField(
+    comment = models.CharField(
         max_length=200,
         verbose_name='Комментарий',
         blank=True
@@ -268,13 +268,13 @@ class OrderProduct(models.Model):
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
-        related_name='products',
+        related_name='products_ordered',
         verbose_name='Заказ',
     )
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        related_name='order_products',
+        related_name='products_ordered',
         verbose_name='Товар',
     )
     quantity = models.PositiveIntegerField(
