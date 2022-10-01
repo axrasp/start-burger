@@ -195,7 +195,7 @@ class Order(models.Model):
         verbose_name='Товар',
         through='OrderProduct'
     )
-    created_add = models.TimeField(
+    created_at = models.TimeField(
         auto_now_add=True,
         verbose_name='Дата создания'
     )
