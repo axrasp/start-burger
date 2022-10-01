@@ -134,7 +134,7 @@ def get_place(api_key, address):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     yandex_api_key = settings.YANDEX_API_KEY
-    orders = Order.objects.all().price.get_restaurants()
+    orders = Order.objects.all().price.get_available_restaurants()
     for order in orders:
         try:
             place = get_place(yandex_api_key, order.address)

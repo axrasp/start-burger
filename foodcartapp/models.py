@@ -145,7 +145,7 @@ class RestaurantMenuItem(models.Model):
 
 
 class PriceQuerySet(models.QuerySet):
-    def get_restaurants(self):
+    def get_available_restaurants(self):
         orders = self.filter(status=0).prefetch_related('products')
 
         menu_items_available = RestaurantMenuItem.objects.filter(
