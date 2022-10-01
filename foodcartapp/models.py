@@ -212,7 +212,6 @@ class Order(models.Model):
             (3, 'Закрыт')
         ],
         db_index=True,
-        default=0,
         verbose_name='Cтатус'
     )
     payment_method = models.SmallIntegerField(
