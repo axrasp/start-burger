@@ -10,7 +10,7 @@ from django.views import View
 from geopy import distance
 
 from foodcartapp.models import Order, Product, Restaurant
-from places.models import Place
+from places import get_place
 
 
 class Login(forms.Form):
@@ -118,17 +118,6 @@ def view_restaurants(request):
     return render(request, template_name="restaurants_list.html", context={
         'restaurants': Restaurant.objects.all(),
     })
-
-
-def get_place(api_key, address):
-    place, _ = Place.objects.get_or_create(
-        address=address
-    )
-    if not place.lon or not place.lat:
-        place_coordinates = fetch_coordinates(api_key, address)
-        place.lon = place_coordinates[0]
-        place.lat = place_coordinates[1]
-    return place
 
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
