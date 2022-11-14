@@ -1,5 +1,5 @@
-from models import Place
-from restaurateur.views import fetch_coordinates
+from .models import Place
+import requests
 
 
 def get_place(api_key, address):
@@ -11,3 +11,21 @@ def get_place(api_key, address):
         place.lon = place_coordinates[0]
         place.lat = place_coordinates[1]
     return place
+
+
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None, None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
