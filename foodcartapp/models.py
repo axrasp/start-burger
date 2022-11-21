@@ -191,7 +191,7 @@ class Order(models.Model):
     products = models.ManyToManyField(
         Product,
         related_name='orders',
-        verbose_name='Товар',
+        verbose_name='Товары',
         through='OrderProduct'
     )
     created_at = models.TimeField(
