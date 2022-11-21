@@ -167,7 +167,7 @@ class PriceQuerySet(models.QuerySet):
                 order.restaurants &= set(product_restaurants)
         return orders
 
-    def price(self):
+    def get_full_price(self):
         return self.annotate(
             full_price=Sum(F('products__price')*F('products_ordered__quantity'))
             )

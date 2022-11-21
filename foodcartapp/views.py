@@ -109,7 +109,7 @@ def register_order(request):
         OrderProduct(order=new_order,
                      product=Product.objects.get(pk=product['product']),
                      quantity=product['quantity'],
-                     price=Product.objects.get(pk=product['product']).price)
+                     price=Product.objects.get(pk=product['product']).get_full_price)
         for product in products_serialized
     ]
     OrderProduct.objects.bulk_create(new_order_products)
