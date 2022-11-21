@@ -11,6 +11,8 @@ from geopy import distance
 
 from foodcartapp.models import Order, Product, Restaurant
 from places.get_place import get_place, fetch_coordinates
+from places.models import Place
+
 
 
 class Login(forms.Form):
@@ -108,12 +110,20 @@ def view_restaurants(request):
 def view_orders(request):
     yandex_api_key = settings.YANDEX_API_KEY
     orders = Order.objects.all().price().get_available_restaurants()
+    places = Place.objects.all()
+    places_adresses = [place.address for place in places]
+
     for order in orders:
-        try:
-            place = get_place(yandex_api_key, order.address)
-        except RequestException:
-            order.restaurant_distances = None
-            continue
+        place = set()
+        if order.address not in places_adresses:
+            try:
+                place = get_place(yandex_api_key, order.address)
+            except RequestException:
+                order.restaurant_distances = None
+                continue
+        for place_db in places:
+            if place_db.address == order.address:
+                place = place_db
 
         for rest in order.restaurants:
             if not rest.lon or not rest.lat:

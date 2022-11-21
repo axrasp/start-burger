@@ -10,6 +10,7 @@ def get_place(api_key, address):
         place_coordinates = fetch_coordinates(api_key, address)
         place.lon = place_coordinates[0]
         place.lat = place_coordinates[1]
+        place.save()
     return place
 
 
