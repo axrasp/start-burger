@@ -222,8 +222,7 @@ class Order(models.Model):
         default=0,
         verbose_name='Способ оплаты'
     )
-    comment = models.CharField(
-        max_length=200,
+    comment = models.TextField(
         verbose_name='Комментарий',
         blank=True
     )
