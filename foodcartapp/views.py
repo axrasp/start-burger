@@ -61,15 +61,14 @@ def product_list_api(request):
     })
 
 
-class ProductsSerializer(Serializer):
-    product = IntegerField(min_value=1)
-    quantity = IntegerField(min_value=1)
+class ProductsSerializer(ModelSerializer):
 
-    def validate_product(self, value):
-        if not Product.objects.filter(pk=value).exists():
-            raise ValidationError(f'Недопустимый первичный '
-                                  f'ключ product : {value}')
-        return value
+    class Meta:
+        model = OrderProduct
+        fields = [
+            'product',
+            'quantity'
+        ]
 
 
 class OrderSerializer(ModelSerializer):
@@ -79,10 +78,14 @@ class OrderSerializer(ModelSerializer):
         write_only=True
     )
 
+    def create(self, validated_data):
+        validated_data.pop('products')
+        new_order = Order.objects.create(**validated_data)
+        return new_order
+
     class Meta:
         model = Order
         fields = [
-            'id',
             'phonenumber',
             'firstname',
             'lastname',
@@ -96,22 +99,17 @@ class OrderSerializer(ModelSerializer):
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    order_serialized = serializer.validated_data
+    new_products = serializer.validated_data['products']
+    new_order = serializer.save()
 
-    new_order = Order.objects.create(
-        firstname=order_serialized['firstname'],
-        lastname=order_serialized['lastname'],
-        phonenumber=order_serialized['phonenumber'],
-        address=order_serialized['address']
-    )
-    products_serialized = order_serialized['products']
     new_order_products = [
         OrderProduct(order=new_order,
-                     product=Product.objects.get(pk=product['product']),
+                     product=product['product'],
                      quantity=product['quantity'],
-                     price=Product.objects.get(pk=product['product']).get_full_price)
-        for product in products_serialized
+                     price=Product.objects.get(pk=product['product'].id).price)
+        for product in new_products
     ]
+
     OrderProduct.objects.bulk_create(new_order_products)
     new_order_serialized = OrderSerializer(new_order)
 

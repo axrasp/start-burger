@@ -192,7 +192,7 @@ class Order(models.Model):
         Product,
         related_name='orders',
         verbose_name='Товары',
-        through='OrderProduct'
+        through='OrderProduct',
     )
     created_at = models.TimeField(
         auto_now_add=True,
@@ -211,6 +211,7 @@ class Order(models.Model):
             (3, 'Закрыт')
         ],
         db_index=True,
+        default=0,
         verbose_name='Cтатус'
     )
     payment_method = models.SmallIntegerField(
@@ -220,7 +221,7 @@ class Order(models.Model):
             (2, 'Требует уточнения')
         ],
         db_index=True,
-        default=3,
+        default=2,
         verbose_name='Способ оплаты'
     )
     comment = models.TextField(
