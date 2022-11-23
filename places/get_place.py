@@ -8,8 +8,9 @@ def get_place(api_key, address):
     )
     if not place.lon or not place.lat:
         place_coordinates = fetch_coordinates(api_key, address)
-        place.lon = place_coordinates[0]
-        place.lat = place_coordinates[1]
+        for lon, lat in place_coordinates:
+            place.lon = lon
+            place.lat = lat
         place.save()
     return place
 

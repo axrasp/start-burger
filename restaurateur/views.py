@@ -134,8 +134,9 @@ def view_orders(request):
                 except request.RequestException:
                     order.restaurant_distances = None
                     continue
-                rest.lon = rest_coordinates[0]
-                rest.lat = rest_coordinates[1]
+                for lon, lat in rest_coordinates:
+                    rest.lon = lon
+                    rest.lat = lat
                 rest.save()
 
             rest_distance = distance.distance(
