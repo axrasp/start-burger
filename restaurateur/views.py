@@ -14,7 +14,6 @@ from places.get_place import get_place, fetch_coordinates
 from places.models import Place
 
 
-
 class Login(forms.Form):
     username = forms.CharField(
         label='Логин', max_length=75, required=True,
@@ -67,8 +66,6 @@ def is_manager(user):
     return user.is_staff  # FIXME replace with specific permission
 
 
-
-
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_products(request):
     restaurants = list(Restaurant.objects.order_by('name'))
@@ -109,13 +106,17 @@ def view_restaurants(request):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     yandex_api_key = settings.YANDEX_API_KEY
-    orders = Order.objects.filter(status__lte=2).get_full_price().get_available_restaurants()
-    places = Place.objects.all()
-    places_adresses = [place.address for place in places]
+
+    orders = Order.objects.filter(status__lte=2)\
+        .get_full_price().get_available_restaurants()
+
+    order_places = [order.address for order in orders]
+    places = Place.objects.filter(address__in=order_places)
 
     for order in orders:
         place = set()
-        if order.address not in places_adresses:
+        if order.address not in places.values_list('address', flat=True):
+            print(order.address)
             try:
                 place = get_place(yandex_api_key, order.address)
             except RequestException:
