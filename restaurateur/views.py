@@ -109,7 +109,7 @@ def view_restaurants(request):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     yandex_api_key = settings.YANDEX_API_KEY
-    orders = Order.objects.all().get_full_price().get_available_restaurants()
+    orders = Order.objects.filter(status__lte=2).get_full_price().get_available_restaurants()
     places = Place.objects.all()
     places_adresses = [place.address for place in places]
 
