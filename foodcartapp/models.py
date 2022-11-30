@@ -148,7 +148,7 @@ class PriceQuerySet(models.QuerySet):
     def get_available_restaurants(self):
         orders = self.prefetch_related('products')
 
-        menu_items_available = RestaurantMenuItem.objects.filter(
+        available_menu_items = RestaurantMenuItem.objects.filter(
             availability=True
         ).select_related('restaurant', 'product')
 
@@ -158,7 +158,7 @@ class PriceQuerySet(models.QuerySet):
 
             for order_item in order.products.all():
                 product_restaurants = [
-                    rest_item.restaurant for rest_item in menu_items_available
+                    rest_item.restaurant for rest_item in available_menu_items
                     if order_item.id == rest_item.product.id
                 ]
 
@@ -169,7 +169,7 @@ class PriceQuerySet(models.QuerySet):
 
     def get_full_price(self):
         return self.annotate(
-            full_price=Sum(F('products__price')*F('products_ordered__quantity'))
+            full_price=Sum(F('products__price')*F('ordered_products__quantity'))
             )
 
 
@@ -267,13 +267,13 @@ class OrderProduct(models.Model):
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
-        related_name='products_ordered',
+        related_name='ordered_products',
         verbose_name='Заказ',
     )
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        related_name='products_ordered',
+        related_name='ordered_products',
         verbose_name='Товар',
     )
     quantity = models.PositiveIntegerField(
