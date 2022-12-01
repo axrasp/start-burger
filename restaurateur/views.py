@@ -114,9 +114,7 @@ def view_orders(request):
     places = Place.objects.filter(address__in=order_places)
 
     for order in orders:
-        place = set()
         if order.address not in places.values_list('address', flat=True):
-            print(order.address)
             try:
                 place = get_place(yandex_api_key, order.address)
             except RequestException:
