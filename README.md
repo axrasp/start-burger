@@ -147,7 +147,7 @@ Parcel будет следить за файлами в каталоге `bundle
 ```sh
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 ```
-
+/node_modules/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 Настроить бэкенд: создать файл `.env` в каталоге `star_burger/` со следующими настройками:
 
 - `DEBUG` — дебаг-режим. Поставьте `False`.
