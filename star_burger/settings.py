@@ -48,7 +48,7 @@ ROOT_URLCONF = 'star_burger.urls'
 
 ROLLBAR = {
     'access_token': env('ROLL_BAR_TOKEN'),
-    'environment': 'development' if DEBUG else 'production',
+    'environment': 'production',
     'branch': 'master',
     'root': os.getcwd(),
 }
@@ -92,9 +92,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:////{0}'.format(os.path.join(BASE_DIR, 'db.sqlite3')),
-    ),
+    'default': dj_database_url.parse(
+        env.str('DB_URL'),
+        conn_max_age=600,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
