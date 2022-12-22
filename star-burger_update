@@ -1,0 +1,25 @@
+#!/bin/bash 
+
+echo "Обновляю зависимости"
+source venv/bin/activate
+pip3 install -r requirements.txt
+echo "Зависимости обновлены"
+
+echo "Обновляю миграции"
+python3 manage.py migrate
+echo "Миграции обновлены"
+
+echo "Собираю статику"
+python3 manage.py collectstatic
+echo "Статика собрана"
+
+echo "Собираю JS"
+./node_modules/.bin/parcel watch bundles-src/index.js --dist-dir bundles --public-url="./"
+echo "JS собран"
+
+deactivate
+
+echo "Перезапускаю Systemd star-burger"
+systmectl reload star-burger
+echo "Деплой закончен"
+
