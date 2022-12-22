@@ -18,8 +18,14 @@ echo "Собираю JS"
 echo "JS собран"
 
 echo "Перезапускаю Systemd star-burger"
-systmectl reload star-burger
-echo "Деплой закончен"
+systemctl reload star-burger
+echo "Информирую rollbar"
+
+export $(cat .env  | tr -d '"' | grep ROLL_BAR_TOKEN )
+export deploy_id=$(git rev-parse HEAD)
+curl -H "X-Rollbar-Access-Token: $ROLL_BAR_TOKEN" -H "Content-Type: application/json" -X POST 'https://api.rollbar.com/api/1/deploy' -d '{"environment": "production", "revision": "'"$deploy_id"'", "status": "succeeded"}'
+
+echo "Комит $(git rev-parse HEAD) задеплоен успешно"
 
 curl -H "X-Rollbar-Access-Token: POST_SERVER_ACCESS_TOKEN" -H "Content-Type: application/json" -X POST 'https://api.rollbar.com/api/1/deploy' -d '{"environment": "qa", "revision": "dc1f74dee5", "rollbar_name": "john", "local_username": "circle-ci", "comment": "Tuesday deployment", "status": "succeeded"}'
 
