@@ -1,0 +1,28 @@
+#!/bin/bash
+
+echo "Обновляю зависимости"
+source venv/bin/activate
+pip3 install -r requirements.txt
+echo "Зависимости обновлены"
+
+echo "Обновляю миграции"
+python3 manage.py migrate
+echo "Миграции обновлены"
+
+echo "Собираю статику"
+python3 manage.py collectstatic
+echo "Статика собрана"
+
+echo "Собираю JS"
+./node_modules/.bin/parcel watch bundles-src/index.js --dist-dir bundles --public-url="./"
+echo "JS собран"
+
+echo "Перезапускаю Systemd star-burger"
+systmectl reload star-burger
+echo "Деплой закончен"
+
+curl -H "X-Rollbar-Access-Token: POST_SERVER_ACCESS_TOKEN" -H "Content-Type: application/json" -X POST 'https://api.rollbar.com/api/1/deploy' -d '{"environment": "qa", "revision": "dc1f74dee5", "rollbar_name": "john", "local_username": "circle-ci", "comment": "Tuesday deployment", "status": "succeeded"}'
+
+deactivate
+
+

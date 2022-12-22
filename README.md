@@ -4,6 +4,7 @@
 
 ![скриншот сайта](https://dvmn.org/filer/canonical/1594651635/686/)
 
+Пример сайта: [11-11.host](https://11-11.host)
 
 Сеть Star Burger объединяет несколько ресторанов, действующих под единой франшизой. У всех ресторанов одинаковое меню и одинаковые цены. Просто выберите блюдо из меню на сайте и укажите место доставки. Мы сами найдём ближайший к вам ресторан, всё приготовим и привезём.
 
@@ -158,6 +159,15 @@ Parcel будет следить за файлами в каталоге `bundle
 - `DB_URL` - [URL](https://dvmn.org/reviews/enhancements/pack_db_credentials_to_single_env_var/) базы данных. Подробнее [тут](https://stackoverflow.com/questions/30044904/how-should-i-set-my-database-url)
 
 ![yandex_api](https://dvmn.org/media/filer_public/1d/e1/1de17248-aaee-4c1a-9c9d-5dbd4bdbde00/howto.gif)
+
+## Быстрое обновление кода на сервере
+
+Настройте ssh-соединение с [git](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
+
+Запустите скрипт командой:
+```sh
+./star-burger.update
+```
 
 ## Цели проекта
 
