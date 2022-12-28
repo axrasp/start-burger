@@ -6,11 +6,11 @@ pip3 install -r requirements.txt
 echo "Зависимости обновлены"
 
 echo "Обновляю миграции"
-python3 manage.py migrate
+python3 manage.py migrate --noinput
 echo "Миграции обновлены"
 
 echo "Собираю статику"
-python3 manage.py collectstatic
+python3 manage.py collectstatic --noinput
 echo "Статика собрана"
 
 echo "Собираю JS"
