@@ -47,7 +47,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'star_burger.urls'
 
 ROLLBAR = {
-    'access_token': env('ROLL_BAR_TOKEN'),
+    'access_token': env('ROLLBAR_TOKEN'),
     'environment': 'production',
     'branch': 'master',
     'root': os.getcwd(),
