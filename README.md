@@ -157,6 +157,7 @@ Parcel будет следить за файлами в каталоге `bundle
 - `YANDEX_API_KEY` - API-ключ в [кабинете разработчика](https://developer.tech.yandex.ru/services/). Он нужен для определения расстояния до ресторанов:
 - `ROLLBAR_TOKEN` - Токен для [rollbar](https://rollbar.com/) - сервис для отслеживания и сбора ошибок.
 - `DB_URL` - [URL](https://dvmn.org/reviews/enhancements/pack_db_credentials_to_single_env_var/) базы данных. Подробнее [тут](https://stackoverflow.com/questions/30044904/how-should-i-set-my-database-url)
+- `ROLLBAR_ENVIRONMENT` - название ``enviroment`` для отслеживания в [rollbar](https://docs.rollbar.com/docs/environments)
 
 ![yandex_api](https://dvmn.org/media/filer_public/1d/e1/1de17248-aaee-4c1a-9c9d-5dbd4bdbde00/howto.gif)
 

@@ -48,7 +48,7 @@ ROOT_URLCONF = 'star_burger.urls'
 
 ROLLBAR = {
     'access_token': env('ROLLBAR_TOKEN'),
-    'environment': 'production',
+    'environment': env('ROLLBAR_ENVIRONMENT'),
     'branch': 'master',
     'root': os.getcwd(),
 }
